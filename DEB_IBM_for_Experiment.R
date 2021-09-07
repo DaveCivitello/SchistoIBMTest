@@ -42,9 +42,6 @@ pars["DV"] = 0.0096 # Units: mg mm^-3 (Empirical weight - length regression; not
 pars["yRP"] = pars["yRP"]*17.5 # new yRP = 0.824 * 17.5 (1-8-19)( # old yRP = 0.0471 * (1/0.4) * 7 [expected shedding output per weekly shed * (snails shed 40% of their total cercariae during 9-11 AM.) * 7 days] 
 pars["hb"] = 0.001
 pars["Hatch"] = 0.5
-#pars["P"] = 1 # predator density
-# pars["PA"] = 1 # predator attack rate units = ENV day-1 (50L sweeped / day or 8.33 * 6 L tanks (from sokolow etal 2014 acta tropica))
-# pars["Ph"] = 0.1 # predator handling time; units = day
 
 
 ######
@@ -427,8 +424,8 @@ pS2B = ggplot(data=FigS2B_df, aes(x=time, y=Mean/500, group=r, colour=r)) +
        colour=expression(paste("Resource productivity,  ", d^-1))) +
   theme(legend.position = c(0.1, 0.825)) + 
   geom_line() + geom_ribbon(aes(ymin=CI_L/500, ymax=CI_H/500, colour=NULL, fill=r), alpha=0.2) +
-  scale_fill_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f")) +
-  scale_color_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f"))
+  scale_fill_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f")) +
+  scale_color_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f"))
 
 pS2B
 
@@ -446,8 +443,9 @@ pS2D = ggplot(data=FigS2D_df, aes(x=time, y=Mean, group=r, colour=r)) +
   xlab(NULL) + ylab(NULL) +
   theme(legend.position = "None") + 
   geom_line() + geom_ribbon(aes(ymin=CI_L, ymax=CI_H, colour=NULL, fill=r), alpha=0.2) +
-  scale_fill_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f")) +
-  scale_color_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f"))
+  scale_fill_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f")) +
+  scale_color_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f"))
+
 
 pS2D
 
@@ -465,8 +463,9 @@ pS2F = ggplot(data=FigS2F_df, aes(x=time, y=Mean, group=r, colour=r)) +
   xlab(NULL) + ylab(NULL) +
   theme(legend.position = "None") + 
   geom_line() + geom_ribbon(aes(ymin=CI_L, ymax=CI_H, colour=NULL, fill=r), alpha=0.2) +
-  scale_fill_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f")) +
-  scale_color_manual(values=c("#2166ac", "black", "#d6604d", "#cb181d", "#67001f"))
+  scale_fill_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f")) +
+  scale_color_manual(values=c("#2166ac", "#92c5de", "black", "#cb181d", "#67001f"))
+
 
 pS2F
 
