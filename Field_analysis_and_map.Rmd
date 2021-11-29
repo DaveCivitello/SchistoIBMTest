@@ -1,0 +1,131 @@
+---
+title: "Tanzania site maps"
+author: "DJC"
+date: "11/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Site maps
+Basic script to plot out sampling locations for our snail dynamics project in Tanzania. Uses sf and tmap packages
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(sf)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+library(dplyr)
+library(cowplot)
+library(ggspatial)
+library(glmmTMB)
+library(ggeffects)
+
+## Avoids scientific notation, maybe not needed
+#options(scipen = 999)
+```
+
+```{r map, echo=FALSE, warning=FALSE, message=FALSE}
+#Polygon maps - shapefiles from the UC Berkeley library page 
+mymap <- st_read("C:/RData/maps/tn398yw9512.shp")
+map_country <- st_read("C:/RData/maps/gn214np6763.shp") 
+mymap2 <- st_read("C:/RData/maps/ts107jn3602.shp")
+mymap3 <- subset(mymap2, name_1 %in% c("Mwanza", "Simiyu", "Shinyanga"))
+# Mwanza, Simiyu and shinyanga
+
+# Color in Lake Victoria
+mymap$color = rep("land", times=168)
+mymap$color[6] = "water"
+
+```
+```{r WBpoints, echo=FALSE, warning=FALSE, message=FALSE}
+WBs <- read.csv("C:/RData/maps/DecimalCoords_109WB.csv")
+Village_Lat = aggregate(Lat_dec ~ Village, FUN=mean, data=WBs)
+Village_Long = aggregate(Long_dec ~ Village, FUN=mean, data=WBs)
+```
+
+
+```{r Fig5A, echo=FALSE, warning=FALSE, message=FALSE}
+theme_set(theme_cowplot())
+theme_update(plot.margin = unit(c(0, 0, 0, 0), "cm"))
+
+Fig5A <- ggplot() +  geom_sf(data=mymap3, fill="lightgray") +
+            theme(axis.ticks.length = unit(-1.5, "mm")) +
+            geom_sf(data=map_country, color="black", fill="NA") + 
+            geom_sf(data=mymap, aes(fill=color), color="NA") +
+            geom_point(data=WBs, aes(x=Long_dec , y=Lat_dec), size=0.75) +
+            geom_sf_label(data=mymap3, aes(label=name_1),nudge_x =c(0.1, -1, 0.75), nudge_y =c(0.1, 0, 0)) +
+            geom_label(data=data.frame(x=32.75, y=-1.5, name="Lake Victoria"), aes(x=x, y=y, label=name)) +
+            ylim(c(-5,-0.9)) + xlim(c(30,36)) + 
+            scale_fill_manual(values=c("NA", "lightblue")) + theme(legend.position = "none") +
+            xlab(NULL) + ylab(NULL) +
+            annotation_scale(location = "bl", width_hint = 0.5)
+Fig5A
+```
+
+
+```{r fielddata, echo=FALSE, warning=FALSE, message=FALSE}
+### Field data analysis ###
+setwd("C:/RData")
+
+fieldsnails = read.csv("Bulinus_nasutus_haematobium_2021.csv")
+
+## Center on WB mean competitor density
+WB_means = aggregate(competitors ~ District_Waterbody, data=fieldsnails, FUN=mean)
+colnames(WB_means)[2] = "mean competitor biomass"
+
+for(i in 1:length(fieldsnails[,1])){
+  fieldsnails[i, "mean competitor biomass"] = WB_means[which(WB_means[,1]==fieldsnails[i, "District_Waterbody"]),2]
+}
+
+
+fieldsnails[,"WB_centered_comps"] = fieldsnails[,"competitors"] - fieldsnails[,"mean competitor biomass"]
+
+
+
+m3 = glmmTMB(round(CorrectedSchistoNumber) ~ WB_centered_comps + snail_biomass + (WB_centered_comps|CorrectedWBName), data=fieldsnails, family="nbinom2")
+summary(m3)
+
+fieldpred = ggeffect(m3, terms="WB_centered_comps")
+
+```
+
+```{r fieldplot}
+theme_update(plot.margin = unit(c(0, 1, 0, 0), "cm"))
+
+Fig5B = ggplot(data=fieldsnails, aes(x=WB_centered_comps, y=CorrectedSchistoNumber)) +
+  theme(axis.ticks.length = unit(-1.5, "mm")) + xlab(NULL) + ylab(NULL) +
+  geom_point() + scale_y_log10(limits=c(1, 10000)) +
+  geom_line(data=fieldpred, aes(x, predicted), inherit.aes = F) +
+  geom_ribbon(data=fieldpred, aes(x, predicted, ymin = conf.low, ymax = conf.high), alpha = .2, inherit.aes = F)
+  
+Fig5B
+```
+
+
+```{r}
+### Create a blank "spacer" for cleaner plotting ###
+spacer = ggplot(data=fieldsnails, aes(x=WB_centered_comps, y=CorrectedSchistoNumber)) +
+  geom_blank() + theme_void()
+
+Fig5 = plot_grid(spacer, Fig5A,
+                 spacer, spacer,
+                 spacer, Fig5B,
+                 spacer, spacer, 
+                 ncol=2, nrow=4, align="hv", rel_widths=c(0.025, 1), rel_heights=c(1, 0.05, 1, 0.1)) +
+  draw_label("A", x=0.17, y=0.975) +
+  draw_label("B", x=0.17, y=0.5) +
+  draw_label("Latitude", angle=90, x=0.025, y=0.775) +
+  draw_label("Longitude", x=0.56, y=0.525) +
+  draw_label("Competitor biomass differential,\n mg wet mass/sampling", x=0.55, y=0.0275) +
+  draw_label("Per capita cercarial production", angle=90, x=0.025, y=0.275)
+
+Fig5
+
+setwd("C:/RData")
+save_plot("Fig5.png", Fig5, ncol=1, nrow=2, base_height=4, base_aspect_ratio = 1.1, dpi=300, units="in")
+```
+
